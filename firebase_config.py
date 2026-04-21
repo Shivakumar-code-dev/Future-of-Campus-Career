@@ -9,7 +9,12 @@ from firebase_admin import credentials, firestore, storage
 # 4. Replace "your-project-id" below with your actual Firebase project ID
 # ─────────────────────────────────────────────────────────
 
-cred = credentials.Certificate("serviceAccountKey.json")
+import os
+import json
+from firebase_admin import credentials
+
+firebase_key = json.loads(os.environ.get("FIREBASE_KEY"))
+cred = credentials.Certificate(firebase_key)
 
 firebase_admin.initialize_app(cred, {
     "storageBucket": "your-project-id.appspot.com"
