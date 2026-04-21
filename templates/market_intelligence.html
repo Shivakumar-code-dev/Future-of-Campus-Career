@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Intelligence — CampusEdge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #08071a;
+      color: #f0efff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── BACKGROUND ── */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 0%, rgba(190,18,60,0.22) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 85% 15%, rgba(124,58,237,0.15) 0%, transparent 55%),
+        #08071a;
+    }
+    .grid-lines {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+      background-size: 56px 56px;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.9rem 2.5rem;
+      background: rgba(8,7,26,0.75);
+      backdrop-filter: blur(24px);
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.05rem;
+      background: linear-gradient(135deg,#a78bfa,#7c3aed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      display: flex; align-items: center; gap: 8px;
+      text-decoration: none;
+    }
+    .logo-spark {
+      width: 22px; height: 22px; border-radius: 7px;
+      background: linear-gradient(135deg,#7c3aed,#5b4af7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; -webkit-text-fill-color: #fff;
+    }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-badge {
+      font-size: 0.7rem; font-weight: 500; padding: 4px 12px;
+      border-radius: 100px; text-transform: uppercase; letter-spacing: 0.06em;
+      background: rgba(190,18,60,0.15); color: #fda4af;
+      border: 0.5px solid rgba(190,18,60,0.3);
+    }
+    .btn-home {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem; font-weight: 400;
+      padding: 0.4rem 1rem; border-radius: 100px;
+      background: transparent; border: 0.5px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6); cursor: pointer;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .btn-home:hover { border-color: rgba(255,255,255,0.35); color: #fff; }
+
+    /* ── PAGE LAYOUT ── */
+    .page-wrap { position: relative; z-index: 1; }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 1200px; margin: 0 auto;
+      padding: 6.5rem 2rem 2.5rem;
+    }
+    .eyebrow {
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #fda4af; margin-bottom: 0.6rem;
+    }
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: clamp(2rem,5vw,3.5rem);
+      letter-spacing: -0.03em; line-height: 1.05; color: #f0efff;
+    }
+    .hero-title .grad {
+      background: linear-gradient(135deg,#fda4af,#be123c);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 0.95rem; color: rgba(240,239,255,0.5);
+      margin-top: 1rem; max-width: 520px;
+      font-weight: 300; line-height: 1.7;
+    }
+
+    /* ── BODY ── */
+    .body-wrap {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+
+    /* ── METRIC CARDS ── */
+    .metrics-row {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 12px; margin-bottom: 1.75rem;
+    }
+    .mc {
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 1.25rem;
+    }
+    .mc-lbl {
+      font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.07em; color: rgba(240,239,255,0.38);
+      margin-bottom: 0.5rem;
+    }
+    .mc-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem; font-weight: 700; line-height: 1;
+    }
+    .mc-delta { font-size: 0.72rem; color: #4ade80; margin-top: 5px; }
+
+    /* ── CHART CONTAINERS ── */
+    .cg3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.5rem; }
+    .cg2 { display:grid; grid-template-columns:2fr 1fr;     gap:1.25rem; margin-bottom:1.5rem; }
+
+    .cbox {
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 18px; padding: 1.5rem;
+    }
+    .cbox-title {
+      font-size: 0.74rem; font-weight: 500; text-transform: uppercase;
+      letter-spacing: 0.07em; color: rgba(240,239,255,0.42);
+      margin-bottom: 1.1rem;
+    }
+    .chart-h { position: relative; height: 220px; }
+    .chart-h-lg { position: relative; height: 260px; }
+
+    /* ── SECTION CARD ── */
+    .scard {
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 18px; padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .scard-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem; padding-bottom: 1rem;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+    .scard-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1rem;
+      letter-spacing: -0.01em; color: #f0efff;
+    }
+    .scard-badge {
+      font-size: 0.7rem; padding: 3px 10px; border-radius: 100px;
+      background: rgba(255,255,255,0.08); color: rgba(240,239,255,0.5);
+    }
+
+    /* ── HEATMAP ── */
+    .heatmap {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
+    }
+    .hcell {
+      border-radius: 10px; padding: 0.85rem 0.75rem;
+      text-align: center; transition: transform 0.2s; cursor: default;
+    }
+    .hcell:hover { transform: scale(1.05); }
+    .hcell-name { font-size: 0.75rem; font-weight: 500; margin-bottom: 4px; }
+    .hcell-val  { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; }
+
+    /* ── TABLE ── */
+    .mi-table { width:100%; border-collapse:collapse; }
+    .mi-table th {
+      font-size:0.72rem; font-weight:500; letter-spacing:0.07em;
+      text-transform:uppercase; color:rgba(240,239,255,0.35);
+      padding:0.6rem 1rem; text-align:left;
+      border-bottom:0.5px solid rgba(255,255,255,0.08);
+    }
+    .mi-table td {
+      font-size:0.85rem; padding:0.85rem 1rem;
+      border-bottom:0.5px solid rgba(255,255,255,0.04);
+      color:rgba(240,239,255,0.65);
+    }
+    .mi-table tr:last-child td { border-bottom:none; }
+    .mi-table tr:hover td { background:rgba(255,255,255,0.025); }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){
+      .cg3,.cg2 { grid-template-columns:1fr; }
+      .metrics-row { grid-template-columns:1fr 1fr; }
+      .heatmap { grid-template-columns:repeat(2,1fr); }
+      .navbar { padding:0.9rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="grid-lines"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <span class="logo-spark">✦</span> CampusEdge
+  </a>
+  <div class="nav-right">
+    <span class="nav-badge">📊 Market Intel</span>
+    <a href="/" class="btn-home">← Home</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="eyebrow">📊 Market Intelligence</div>
+    <h1 class="hero-title">
+      Hiring Trends &amp;<br>
+      <span class="grad">Placement Analytics</span>
+    </h1>
+    <p class="hero-sub">
+      Real-time insights on skill demand, industry trends, and campus placement performance.
+    </p>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="body-wrap">
+
+    <!-- METRIC CARDS -->
+    <div class="metrics-row">
+      <div class="mc">
+        <div class="mc-lbl">Total Drives</div>
+        <div class="mc-val" style="color:#fda4af;">{{ drives|length }}</div>
+        <div class="mc-delta">this year</div>
+      </div>
+      <div class="mc">
+        <div class="mc-lbl">Total Applications</div>
+        <div class="mc-val" style="color:#a78bfa;">{{ applications|length }}</div>
+      </div>
+      <div class="mc">
+        <div class="mc-lbl">Avg Package</div>
+        <div class="mc-val" style="color:#4ade80;">12.4 LPA</div>
+      </div>
+      <div class="mc">
+        <div class="mc-lbl">Placement Rate</div>
+        <div class="mc-val" style="color:#60a5fa;">78%</div>
+        <div class="mc-delta">↑ 6% YoY</div>
+      </div>
+    </div>
+
+    <!-- CHART ROW 1 -->
+    <div class="cg3">
+      <div class="cbox">
+        <div class="cbox-title">Hiring by Month</div>
+        <div class="chart-h"><canvas id="c-monthly"></canvas></div>
+      </div>
+      <div class="cbox">
+        <div class="cbox-title">Application Status Split</div>
+        <div class="chart-h"><canvas id="c-status"></canvas></div>
+      </div>
+      <div class="cbox">
+        <div class="cbox-title">Top Sectors Hiring</div>
+        <div class="chart-h"><canvas id="c-sector"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHART ROW 2 -->
+    <div class="cg2">
+      <div class="cbox">
+        <div class="cbox-title">Salary Package Trends (LPA) — Last 5 Years</div>
+        <div class="chart-h-lg"><canvas id="c-salary"></canvas></div>
+      </div>
+      <div class="cbox">
+        <div class="cbox-title">Placement % by Branch</div>
+        <div class="chart-h-lg"><canvas id="c-branch"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SKILL HEATMAP -->
+    <div class="scard">
+      <div class="scard-head">
+        <span class="scard-title">🔥 In-Demand Skills Heatmap</span>
+        <span class="scard-badge">2024–25</span>
+      </div>
+      <div class="heatmap">
+        {% set skills = [
+          ("Python",           94, "rgba(124,58,237,0.35)",  "#c4b5fd"),
+          ("React",            87, "rgba(13,148,136,0.35)",  "#5eead4"),
+          ("System Design",    82, "rgba(190,18,60,0.35)",   "#fda4af"),
+          ("SQL / NoSQL",      79, "rgba(217,119,6,0.35)",   "#fcd34d"),
+          ("Machine Learning", 75, "rgba(5,150,105,0.35)",   "#4ade80"),
+          ("Docker / K8s",     68, "rgba(37,99,235,0.35)",   "#93c5fd"),
+          ("Node.js",          64, "rgba(124,58,237,0.25)",  "#c4b5fd"),
+          ("Cloud AWS/GCP",    71, "rgba(190,18,60,0.25)",   "#fecdd3"),
+          ("Java / Spring",    58, "rgba(217,119,6,0.25)",   "#fde68a"),
+          ("TypeScript",       55, "rgba(13,148,136,0.25)",  "#99f6e4"),
+          ("DSA",              90, "rgba(124,58,237,0.42)",  "#a78bfa"),
+          ("C++",              52, "rgba(5,150,105,0.25)",   "#6ee7b7")
+        ] %}
+        {% for name, val, bg, color in skills %}
+        <div class="hcell" style="background:{{ bg }}; border:0.5px solid {{ color }}55;">
+          <div class="hcell-name" style="color:{{ color }};">{{ name }}</div>
+          <div class="hcell-val"  style="color:{{ color }};">{{ val }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- TOP COMPANIES TABLE -->
+    <div class="scard" style="margin-bottom:0;">
+      <div class="scard-head">
+        <span class="scard-title">🏢 Top Recruiting Companies</span>
+        <span class="scard-badge">2024–25</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="mi-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Company</th><th>Sector</th>
+              <th>Avg Package</th><th>Offers</th><th>Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in [
+              (1,"Google",    "Tech / Cloud",       "45 LPA", 12,  "↑"),
+              (2,"Microsoft", "Software",            "38 LPA", 18,  "↑"),
+              (3,"Amazon",    "E-Commerce / Cloud",  "28 LPA", 35,  "→"),
+              (4,"Infosys",   "IT Services",         "4.5 LPA",180, "↑"),
+              (5,"TCS",       "IT Services",         "3.6 LPA",220, "→"),
+              (6,"Flipkart",  "E-Commerce",          "20 LPA", 22,  "↑"),
+              (7,"Accenture", "Consulting",          "4.2 LPA",140, "→"),
+              (8,"Wipro",     "IT Services",         "3.5 LPA",160, "↓")
+            ] %}
+            <tr>
+              <td style="color:rgba(240,239,255,0.25);">{{ row[0] }}</td>
+              <td style="font-weight:500; color:#f0efff;">{{ row[1] }}</td>
+              <td>{{ row[2] }}</td>
+              <td style="color:#4ade80; font-family:'Syne',sans-serif; font-weight:700;">{{ row[3] }}</td>
+              <td>{{ row[4] }}</td>
+              <td style="font-size:1rem; color:{% if row[5]=='↑' %}#4ade80{% elif row[5]=='→' %}#fbbf24{% else %}#f87171{% endif %};">{{ row[5] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /body-wrap -->
+</div><!-- /page-wrap -->
+
+<script>
+const TICK = { color:"rgba(240,239,255,0.45)", font:{size:10} };
+const GRID = { color:"rgba(255,255,255,0.05)" };
+const BASE = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{ labels:{ color:"rgba(240,239,255,0.55)", font:{size:11}, boxWidth:12 } } },
+  scales:{ x:{ ticks:TICK, grid:GRID }, y:{ ticks:TICK, grid:GRID } }
+};
+const NO_AXES = { ...BASE, scales:undefined };
+
+/* Hiring by Month */
+new Chart(document.getElementById("c-monthly"),{
+  type:"bar",
+  data:{
+    labels:["Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May"],
+    datasets:[{
+      label:"Drives",
+      data:[8,15,22,18,12,25,30,28,20,10],
+      backgroundColor:"rgba(190,18,60,0.7)",
+      borderRadius:5, borderWidth:0
+    }]
+  },
+  options:{ ...BASE }
+});
+
+/* Application Status Doughnut */
+new Chart(document.getElementById("c-status"),{
+  type:"doughnut",
+  data:{
+    labels:["Selected","Interview","Aptitude","Applied","Rejected"],
+    datasets:[{
+      data:[18,15,20,35,12],
+      backgroundColor:["#4ade80","#a78bfa","#fbbf24","#60a5fa","#f87171"],
+      borderWidth:0
+    }]
+  },
+  options:{ ...NO_AXES, cutout:"62%" }
+});
+
+/* Top Sectors Polar */
+new Chart(document.getElementById("c-sector"),{
+  type:"polarArea",
+  data:{
+    labels:["IT Services","Product","Fintech","Consulting","Startup","Core"],
+    datasets:[{
+      data:[42,28,15,18,10,8],
+      backgroundColor:[
+        "rgba(124,58,237,0.7)","rgba(13,148,136,0.7)",
+        "rgba(217,119,6,0.7)","rgba(190,18,60,0.7)",
+        "rgba(37,99,235,0.65)","rgba(5,150,105,0.65)"
+      ],
+      borderWidth:0
+    }]
+  },
+  options:{ ...NO_AXES }
+});
+
+/* Salary Trends Line */
+new Chart(document.getElementById("c-salary"),{
+  type:"line",
+  data:{
+    labels:["2020","2021","2022","2023","2024"],
+    datasets:[
+      {
+        label:"Avg LPA",
+        data:[6.5,7.2,9.1,11.4,12.4],
+        borderColor:"#a78bfa",
+        backgroundColor:"rgba(124,58,237,0.12)",
+        tension:0.4, fill:true,
+        pointRadius:5, pointBackgroundColor:"#a78bfa"
+      },
+      {
+        label:"Max LPA",
+        data:[22,28,38,42,45],
+        borderColor:"#4ade80",
+        backgroundColor:"rgba(5,150,105,0.08)",
+        tension:0.4, fill:true,
+        pointRadius:5, pointBackgroundColor:"#4ade80"
+      }
+    ]
+  },
+  options:{ ...BASE }
+});
+
+/* Branch Bar */
+new Chart(document.getElementById("c-branch"),{
+  type:"bar",
+  data:{
+    labels:["CSE","AIML","ISE","DS","ECE","ME","CE"],
+    datasets:[{
+      label:"Placed %",
+      data:[92,95,88,91,72,58,54],
+      backgroundColor:[
+        "rgba(124,58,237,0.75)","rgba(13,148,136,0.75)",
+        "rgba(190,18,60,0.75)","rgba(217,119,6,0.75)",
+        "rgba(37,99,235,0.65)","rgba(5,150,105,0.55)",
+        "rgba(124,58,237,0.4)"
+      ],
+      borderRadius:6, borderWidth:0
+    }]
+  },
+  options:{
+    ...BASE,
+    plugins:{ ...BASE.plugins, legend:{ display:false } }
+  }
+});
+</script>
+</body>
+</html>

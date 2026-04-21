@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — CampusEdge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="bg-glow"></div><div class="grid-lines"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo"><span class="logo-spark">✦</span> CampusEdge</a>
+  <div class="nav-user">
+    <span class="nav-badge badge-admin">Admin</span>
+    <a href="/" class="btn-logout">← Home</a>
+  </div>
+</nav>
+
+<div class="page container">
+  <div class="dash-header">
+    <div class="dash-greeting">Admin Analytics Panel</div>
+    <div class="dash-sub">System-wide overview of placements, students, and platform activity.</div>
+  </div>
+
+  <div class="metrics-row" style="grid-template-columns:repeat(5,1fr);">
+    <div class="metric-card"><div class="mc-label">Total Students</div><div class="mc-val" style="color:#a78bfa;">{{ total_students }}</div></div>
+    <div class="metric-card"><div class="mc-label">Active Drives</div><div class="mc-val" style="color:#4ade80;">{{ total_drives }}</div></div>
+    <div class="metric-card"><div class="mc-label">Alumni</div><div class="mc-val" style="color:#fcd34d;">{{ total_alumni }}</div></div>
+    <div class="metric-card"><div class="mc-label">Applications</div><div class="mc-val" style="color:#60a5fa;">{{ total_applications }}</div></div>
+    <div class="metric-card"><div class="mc-label">Placement %</div><div class="mc-val" style="color:#4ade80;">{{ placement_pct }}%</div><div class="mc-delta">of all students</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-box"><div class="chart-box-title">Placement Trend (Monthly)</div><div class="chart-wrap"><canvas id="c-trend"></canvas></div></div>
+    <div class="chart-box"><div class="chart-box-title">Status Distribution</div><div class="chart-wrap"><canvas id="c-dist"></canvas></div></div>
+  </div>
+
+  <div class="card" style="margin-top:1.25rem;">
+    <div class="card-header"><span class="card-title">All Applications</span><span class="card-badge">{{ total_applications }}</span></div>
+    {% if applications %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Application ID</th><th>Student ID</th><th>Drive ID</th><th>Status</th><th>Applied On</th></tr></thead>
+        <tbody>
+          {% for a in applications[:50] %}
+          <tr>
+            <td style="font-family:monospace;font-size:.75rem;color:var(--text3);">{{ a.app_id[:8] }}…</td>
+            <td style="font-family:monospace;font-size:.75rem;color:var(--text3);">{{ a.student_id[:8] }}…</td>
+            <td style="font-family:monospace;font-size:.75rem;color:var(--text3);">{{ a.drive_id[:8] }}…</td>
+            <td><span class="pill pill-{{ a.status|lower }}">{{ a.status }}</span></td>
+            <td>{{ a.applied_at[:10] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="es-icon">📊</div><p>No application data yet.</p></div>
+    {% endif %}
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1.25rem;">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Quick Links</span></div>
+      <div style="display:flex;flex-direction:column;gap:.6rem;">
+        <a href="/tpo/login" class="btn btn-ghost" style="text-align:left;border-radius:10px;justify-content:flex-start;">🎓 TPO Portal</a>
+        <a href="/student/login" class="btn btn-ghost" style="text-align:left;border-radius:10px;justify-content:flex-start;">🧑‍💻 Student Portal</a>
+        <a href="/alumni/login" class="btn btn-ghost" style="text-align:left;border-radius:10px;justify-content:flex-start;">🏆 Alumni Portal</a>
+        <a href="/market" class="btn btn-ghost" style="text-align:left;border-radius:10px;justify-content:flex-start;">📊 Market Intelligence</a>
+      </div>
+    </div>
+    <div class="chart-box"><div class="chart-box-title">User Roles Distribution</div><div class="chart-wrap"><canvas id="c-roles"></canvas></div></div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+const CO = {
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:"rgba(240,239,255,.5)",font:{size:11},boxWidth:10}}},
+  scales:{x:{ticks:{color:"rgba(240,239,255,.4)"},grid:{color:"rgba(255,255,255,.04)"}},y:{ticks:{color:"rgba(240,239,255,.4)"},grid:{color:"rgba(255,255,255,.04)"}}}
+};
+new Chart(document.getElementById("c-trend"),{
+  type:"line",
+  data:{labels:["Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"],
+    datasets:[{label:"Placed",data:[5,12,22,18,30,45,62,{{ placement_pct }}],borderColor:"#4ade80",backgroundColor:"rgba(5,150,105,.1)",tension:.4,fill:true,pointRadius:4}]},
+  options:{...CO}
+});
+new Chart(document.getElementById("c-dist"),{
+  type:"doughnut",
+  data:{labels:["Selected","Interview","Aptitude","Applied","Rejected"],
+    datasets:[{data:[{{ placement_pct }},12,18,40,10],backgroundColor:["#4ade80","#a78bfa","#fbbf24","#60a5fa","#f87171"],borderWidth:0}]},
+  options:{...CO,scales:undefined,cutout:"60%"}
+});
+new Chart(document.getElementById("c-roles"),{
+  type:"bar",
+  data:{labels:["Students","TPO","Alumni"],
+    datasets:[{label:"Users",data:[{{ total_students }},5,{{ total_alumni }}],backgroundColor:["rgba(124,58,237,.6)","rgba(13,148,136,.6)","rgba(217,119,6,.6)"],borderRadius:6,borderWidth:0}]},
+  options:{...CO,plugins:{...CO.plugins,legend:{display:false}}}
+});
+</script>
+</body>
+</html>

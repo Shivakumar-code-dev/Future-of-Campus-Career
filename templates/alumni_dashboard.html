@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alumni Dashboard — CampusEdge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="bg-glow"></div><div class="grid-lines"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo"><span class="logo-spark">✦</span> CampusEdge</a>
+  <div class="nav-user">
+    <span class="nav-name">{{ session.name }}</span>
+    <span class="nav-badge badge-alumni">Alumni</span>
+    <a href="/logout" class="btn-logout">Sign out</a>
+  </div>
+</nav>
+
+<div class="page container">
+  <div class="dash-header">
+    <div class="dash-greeting">Welcome, {{ session.name }} 🌟</div>
+    <div class="dash-sub">Give back to your community — refer students, post jobs, and offer mentorship.</div>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric-card"><div class="mc-label">Referrals Submitted</div><div class="mc-val" style="color:#fcd34d;">{{ referrals|length }}</div></div>
+    <div class="metric-card"><div class="mc-label">Approved</div><div class="mc-val" style="color:#4ade80;">{{ referrals|selectattr("status","equalto","approved")|list|length }}</div></div>
+    <div class="metric-card"><div class="mc-label">Pending Review</div><div class="mc-val" style="color:#fbbf24;">{{ referrals|selectattr("status","equalto","pending")|list|length }}</div></div>
+   <div class="metric-card">
+  <div class="mc-label">Mentorship Sessions</div>
+  <div class="mc-val" style="color:#60a5fa;">{{ mentorship_sessions|length }}</div>
+  <div class="mc-delta">
+    {% set my_bookings = mentorship_sessions|selectattr("student_id","equalto",session.user_id)|list %}
+    {% if my_bookings|length > 0 %}{{ my_bookings|length }} booked by you{% else %}available{% endif %}
+  </div>
+</div>
+  </div>
+
+  <div data-tabs>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="referrals">Referrals</button>
+      <button class="tab-btn" data-tab="mentorship">Mentorship</button>
+      <button class="tab-btn" data-tab="profile">My Profile</button>
+    </div>
+
+    <!-- REFERRALS -->
+    <div class="tab-panel active" data-panel="referrals">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">My Job Referrals</span>
+          <button class="btn btn-gold btn-sm" data-open-modal="modal-referral">+ Submit Referral</button>
+        </div>
+        {% if referrals %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Company</th><th>Job Title</th><th>Package</th><th>Location</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+              {% for r in referrals %}
+              <tr>
+                <td>{{ r.company }}</td>
+                <td>{{ r.job_title }}</td>
+                <td>{{ r.package }} LPA</td>
+                <td>{{ r.location }}</td>
+                <td><span class="pill pill-{{ r.status }}">{{ r.status|title }}</span></td>
+                <td>{{ r.created_at[:10] }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="es-icon">📤</div><p>You haven't submitted any referrals yet.<br>Help students by submitting job openings from your company!</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MENTORSHIP -->
+    <div class="tab-panel" data-panel="mentorship">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Mentorship Sessions</span>
+          <button class="btn btn-primary btn-sm" data-open-modal="modal-session">+ Create Session</button>
+        </div>
+        {% if mentorship_sessions %}
+        <div class="drives-grid">
+          {% for s in mentorship_sessions %}
+          <div class="drive-card">
+            <div class="drive-company">{{ s.session_type }}</div>
+            <div class="drive-role" style="color:var(--text2);">{{ s.get("session_date","TBD") }}</div>
+            <div class="drive-meta" style="margin-bottom:.75rem;">Duration: <span>{{ s.get("duration","60 min") }}</span></div>
+            <span class="pill pill-{{ s.status }}">{{ s.status|title }}</span>
+            {% if s.status == "booked" %}
+            <div style="margin-top:.6rem;font-size:.78rem;color:var(--text2);">Booked by: {{ s.get("student_name","—") }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="es-icon">🧑‍🏫</div><p>No sessions created yet.<br>Create a slot and students will book it!</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="tab-panel" data-panel="profile">
+      <div class="card">
+        <div class="card-header"><span class="card-title">My Profile</span></div>
+        <div class="profile-chip">
+          <div class="avatar-circle" style="background:linear-gradient(135deg,#b45309,#d97706);">{{ session.name[:2]|upper }}</div>
+          <div><div class="chip-name">{{ profile.full_name }}</div><div class="chip-sub">{{ profile.job_title }} at {{ profile.company }}</div></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td style="color:var(--text3);width:40%;">Email</td><td>{{ profile.email }}</td></tr>
+              <tr><td style="color:var(--text3);">Branch</td><td>{{ profile.branch }} ({{ profile.grad_year }})</td></tr>
+              <tr><td style="color:var(--text3);">Company</td><td>{{ profile.company }}</td></tr>
+              <tr><td style="color:var(--text3);">Experience</td><td>{{ profile.experience }} years</td></tr>
+              <tr><td style="color:var(--text3);">Location</td><td>{{ profile.location }}</td></tr>
+              <tr><td style="color:var(--text3);">Expertise</td><td>{{ profile.expertise }}</td></tr>
+              <tr><td style="color:var(--text3);">About</td><td style="font-size:.82rem;line-height:1.6;">{{ profile.bio }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REFERRAL MODAL -->
+<div class="modal-overlay" id="modal-referral">
+  <div class="modal">
+    <button class="modal-close">✕</button>
+    <div class="modal-title">Submit Job Referral</div>
+    <form onsubmit="submitReferral(event)">
+      <div class="form-grid">
+        <div class="form-group"><label>Company Name</label><input type="text" name="company" placeholder="e.g. Google" required></div>
+        <div class="form-group"><label>Job Title</label><input type="text" name="job_title" placeholder="e.g. SWE Intern" required></div>
+        <div class="form-group"><label>Package (LPA)</label><input type="text" name="package" placeholder="12.5" required></div>
+        <div class="form-group"><label>Location</label><input type="text" name="location" placeholder="Bangalore, Remote…"></div>
+        <div class="form-group"><label>Min CGPA Required</label><input type="number" name="min_cgpa" step="0.1" placeholder="7.0"></div>
+        <div class="form-group"><label>Preferred Branch</label><input type="text" name="preferred_branch" placeholder="CSE, ISE, Any"></div>
+        <div class="form-group span2"><label>Application / Job Link</label><input type="url" name="job_link" placeholder="https://careers.company.com/job/123"></div>
+        <div class="form-group span2"><label>Additional Notes</label><textarea name="notes" placeholder="Any requirements, deadlines, or tips for students…"></textarea></div>
+      </div>
+      <button type="submit" class="btn btn-gold btn-full">Submit for TPO Review →</button>
+    </form>
+  </div>
+</div>
+
+<!-- SESSION MODAL -->
+<div class="modal-overlay" id="modal-session">
+  <div class="modal">
+    <button class="modal-close">✕</button>
+    <div class="modal-title">Create Mentorship Session</div>
+    <form onsubmit="createMentorSession(event)">
+      <div class="form-grid">
+        <div class="form-group span2">
+          <label>Session Type</label>
+          <select name="session_type" required>
+            <option value="">Select type</option>
+            <option>Mock Technical Interview</option>
+            <option>Resume Review</option>
+            <option>Career Guidance</option>
+            <option>System Design Discussion</option>
+            <option>HR Interview Prep</option>
+            <option>General Mentorship</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Date</label><input type="date" name="session_date" required></div>
+        <div class="form-group"><label>Time</label><input type="time" name="session_time" required></div>
+        <div class="form-group"><label>Duration</label>
+          <select name="duration">
+            <option>30 min</option><option>60 min</option><option>90 min</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Mode</label>
+          <select name="mode">
+            <option>Google Meet</option><option>Zoom</option><option>Microsoft Teams</option><option>Phone Call</option>
+          </select>
+        </div>
+        <div class="form-group span2"><label>Notes for Students</label><textarea name="notes" placeholder="What will you cover? Any prerequisites?"></textarea></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Create Session →</button>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

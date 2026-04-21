@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Login — CampusEdge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="bg-glow"></div><div class="grid-lines"></div>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-icon" style="background:rgba(13,148,136,.15);border:.5px solid rgba(13,148,136,.25);">🧑‍💻</div>
+    <div class="auth-title">Student Login</div>
+    <div class="auth-sub">Access your career dashboard</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<ul class="flash-list">{% for cat,msg in messages %}<li class="flash-msg flash-{{cat}}">{{msg}}</li>{% endfor %}</ul>{% endif %}{% endwith %}
+    <form method="POST">
+      <div class="form-grid single">
+        <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="student@college.edu" required></div>
+        <div class="form-group"><label>Password</label><input type="password" name="password" placeholder="Enter your password" required></div>
+      </div>
+      <button type="submit" class="btn btn-teal btn-full">Sign In to Student Dashboard →</button>
+    </form>
+    <div class="auth-link">New student? <a href="/student/register">Create account</a></div>
+    <div class="auth-link"><a href="/">← Back to home</a></div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

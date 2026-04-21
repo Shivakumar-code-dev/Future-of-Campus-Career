@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Register — CampusEdge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="bg-glow"></div><div class="grid-lines"></div>
+<div class="auth-wrap" style="padding:2rem 2rem 4rem;">
+  <div class="auth-card wide">
+    <div class="auth-icon" style="background:rgba(13,148,136,.15);border:.5px solid rgba(13,148,136,.25);">🧑‍💻</div>
+    <div class="auth-title">Student Registration</div>
+    <div class="auth-sub">Build your career profile and start your placement journey</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<ul class="flash-list">{% for cat,msg in messages %}<li class="flash-msg flash-{{cat}}">{{msg}}</li>{% endfor %}</ul>{% endif %}{% endwith %}
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name</label><input type="text" name="full_name" placeholder="Rahul Kumar" required></div>
+        <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="rahul@college.edu" required></div>
+        <div class="form-group"><label>USN / Roll Number</label><input type="text" name="usn" placeholder="1AB20CS001" required></div>
+        <div class="form-group"><label>Branch</label>
+          <select name="branch" required>
+            <option value="">Select branch</option>
+            {% for b in ["CSE","ISE","ECE","EEE","ME","CE","AIML","DS","CY"] %}
+            <option value="{{b}}">{{b}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label>CGPA (out of 10)</label><input type="number" name="cgpa" step="0.01" min="0" max="10" placeholder="8.5" required></div>
+        <div class="form-group"><label>Active Backlogs</label><input type="number" name="backlogs" min="0" placeholder="0" required></div>
+        <div class="form-group"><label>Phone Number</label><input type="tel" name="phone" placeholder="+91 9876543210"></div>
+        <div class="form-group"><label>LinkedIn Profile</label><input type="url" name="linkedin" placeholder="linkedin.com/in/rahulkumar"></div>
+        <div class="form-group span2"><label>Technical Skills (comma-separated)</label><input type="text" name="skills" placeholder="Python, React, SQL, Machine Learning, Git"></div>
+        <div class="form-group span2"><label>Projects (describe your key projects)</label><textarea name="projects" placeholder="1. Attendance System using Face Recognition — Python, OpenCV&#10;2. E-Commerce Website — React, Node.js, MongoDB"></textarea></div>
+        <div class="form-group span2"><label>Certifications & Achievements</label><textarea name="achievements" placeholder="AWS Cloud Practitioner, Google Data Analytics, Hackathon Winner…"></textarea></div>
+        <div class="form-group span2"><label>Upload Resume (PDF/DOC)</label><input type="file" name="resume" accept=".pdf,.doc,.docx"></div>
+        <div class="form-group"><label>Password</label><input type="password" name="password" placeholder="Create a strong password" required></div>
+        <div class="form-group"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Repeat password" required></div>
+      </div>
+      <button type="submit" class="btn btn-teal btn-full">Create Student Account →</button>
+    </form>
+    <div class="auth-link">Already registered? <a href="/student/login">Sign in</a></div>
+    <div class="auth-link"><a href="/">← Back to home</a></div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

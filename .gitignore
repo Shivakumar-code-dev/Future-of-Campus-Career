@@ -1,0 +1,18 @@
+# Secrets
+serviceAccountKey.json
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Uploads
+static/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/

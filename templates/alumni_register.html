@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alumni Register — CampusEdge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="bg-glow"></div><div class="grid-lines"></div>
+<div class="auth-wrap" style="padding:2rem 2rem 4rem;">
+  <div class="auth-card wide">
+    <div class="auth-icon" style="background:rgba(217,119,6,.15);border:.5px solid rgba(217,119,6,.25);">🏆</div>
+    <div class="auth-title">Alumni Registration</div>
+    <div class="auth-sub">Join the alumni network and help students succeed</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<ul class="flash-list">{% for cat,msg in messages %}<li class="flash-msg flash-{{cat}}">{{msg}}</li>{% endfor %}</ul>{% endif %}{% endwith %}
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name</label><input type="text" name="full_name" placeholder="Priya Sharma" required></div>
+        <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="priya@company.com" required></div>
+        <div class="form-group"><label>Graduation Year</label><input type="number" name="grad_year" placeholder="2020" min="1990" max="2030" required></div>
+        <div class="form-group"><label>Branch Studied</label>
+          <select name="branch" required>
+            <option value="">Select branch</option>
+            {% for b in ["CSE","ISE","ECE","EEE","ME","CE","AIML","DS","CY"] %}
+            <option value="{{b}}">{{b}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label>Current Company</label><input type="text" name="company" placeholder="Google, Microsoft, etc." required></div>
+        <div class="form-group"><label>Current Job Title</label><input type="text" name="job_title" placeholder="Senior Software Engineer" required></div>
+        <div class="form-group"><label>Years of Experience</label><input type="number" name="experience" min="0" max="50" placeholder="4" required></div>
+        <div class="form-group"><label>Location</label><input type="text" name="location" placeholder="Bangalore, India"></div>
+        <div class="form-group"><label>LinkedIn Profile</label><input type="url" name="linkedin" placeholder="linkedin.com/in/priyasharma"></div>
+        <div class="form-group"><label>Phone Number</label><input type="tel" name="phone" placeholder="+91 9876543210"></div>
+        <div class="form-group span2"><label>Area of Expertise</label><input type="text" name="expertise" placeholder="Full Stack Development, System Design, Machine Learning, Cloud…"></div>
+        <div class="form-group span2"><label>About (brief bio)</label><textarea name="bio" placeholder="Share a bit about your journey, what you do, and how you can help students…"></textarea></div>
+        <div class="form-group"><label>Password</label><input type="password" name="password" placeholder="Create a strong password" required></div>
+        <div class="form-group"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Repeat password" required></div>
+      </div>
+      <button type="submit" class="btn btn-gold btn-full">Create Alumni Account →</button>
+    </form>
+    <div class="auth-link">Already registered? <a href="/alumni/login">Sign in</a></div>
+    <div class="auth-link"><a href="/">← Back to home</a></div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

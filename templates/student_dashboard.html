@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard — CampusEdge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="bg-glow"></div><div class="grid-lines"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo"><span class="logo-spark">✦</span> CampusEdge</a>
+  <div class="nav-user">
+    <span class="nav-name">{{ session.name }}</span>
+    <span class="nav-badge badge-student">Student</span>
+    <div style="position:relative;" id="notif-wrapper">
+  <span class="notif-btn" id="notif-bell" title="Notifications" onclick="toggleNotifs(event)">
+    🔔
+    {% if notifications %}<span class="notif-count" id="notif-badge">{{ notifications|length }}</span>{% endif %}
+  </span>
+
+  <!-- NOTIFICATION DROPDOWN -->
+  <div id="notif-dropdown" style="
+    display:none; position:absolute; top:calc(100% + 10px); right:0;
+    width:320px; background:#13122e;
+    border:.5px solid rgba(255,255,255,0.12); border-radius:16px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.5); z-index:9999; overflow:hidden;">
+
+    <div style="padding:.85rem 1.1rem; border-bottom:.5px solid rgba(255,255,255,0.07);
+      display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem;">Notifications</span>
+      {% if notifications %}
+      <span style="font-size:.7rem; color:rgba(255,255,255,.4);">{{ notifications|length }} unread</span>
+      {% endif %}
+    </div>
+
+    <div style="max-height:340px; overflow-y:auto;">
+      {% if notifications %}
+        {% for n in notifications %}
+        <div style="padding:.85rem 1.1rem; border-bottom:.5px solid rgba(255,255,255,0.05);
+          display:flex; gap:10px; align-items:flex-start; transition:background .15s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.03)'"
+          onmouseout="this.style.background='transparent'">
+          <div style="width:32px; height:32px; border-radius:9px; flex-shrink:0;
+            background:rgba(124,58,237,0.2); border:.5px solid rgba(124,58,237,0.3);
+            display:flex; align-items:center; justify-content:center; font-size:.85rem;">🔔</div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:.82rem; color:rgba(240,239,255,0.85); line-height:1.5; margin-bottom:3px;">
+              {{ n.message }}
+            </div>
+            <div style="font-size:.7rem; color:rgba(255,255,255,.3);">{{ n.created_at[:10] }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="padding:2.5rem 1rem; text-align:center; color:rgba(255,255,255,.3);">
+          <div style="font-size:1.8rem; margin-bottom:.5rem;">🔔</div>
+          <div style="font-size:.83rem;">No notifications yet</div>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if notifications %}
+    <div style="padding:.7rem 1.1rem; border-top:.5px solid rgba(255,255,255,0.07); text-align:center;">
+      <button onclick="clearNotifs()" style="font-family:'DM Sans',sans-serif; font-size:.75rem;
+        color:rgba(255,255,255,.4); background:none; border:none; cursor:pointer;">
+        Mark all as read
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+    <a href="/logout" class="btn-logout">Sign out</a>
+  </div>
+</nav>
+
+<div class="page container">
+  <div class="dash-header">
+    <div class="dash-greeting">Hello, {{ session.name }} 🚀</div>
+    <div class="dash-sub">Your career dashboard — track applications, browse drives, and get AI-powered feedback.</div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics-row">
+    <div class="metric-card"><div class="mc-label">Available Drives</div><div class="mc-val" style="color:#5eead4;">{{ drives|length }}</div><div class="mc-delta">active now</div></div>
+    <div class="metric-card"><div class="mc-label">My Applications</div><div class="mc-val" style="color:#a78bfa;">{{ applications|length }}</div><div class="mc-delta">submitted</div></div>
+    <div class="metric-card"><div class="mc-label">Notifications</div><div class="mc-val" style="color:#fbbf24;">{{ notifications|length }}</div><div class="mc-delta">unread</div></div>
+    <div class="metric-card"><div class="mc-label">Mentorship Sessions</div><div class="mc-val" style="color:#60a5fa;">{{ mentorship_sessions|length }}</div><div class="mc-delta">booked</div></div>
+  </div>
+
+  <div data-tabs>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="drives">Browse Drives</button>
+      <button class="tab-btn" data-tab="applications">My Applications</button>
+      <button class="tab-btn" data-tab="ai">AI Resume Analyzer</button>
+      <button class="tab-btn" data-tab="mentorship">Mentorship</button>
+      <button class="tab-btn" data-tab="profile">My Profile</button>
+    </div>
+
+    <!-- DRIVES -->
+    <div class="tab-panel active" data-panel="drives">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Active Placement Drives</span>
+          <span class="card-badge">{{ drives|length }} open</span>
+        </div>
+        {% if drives %}
+        <div class="drives-grid">
+          {% for d in drives %}
+          <div class="drive-card">
+            <div class="drive-company">{{ d.company_name }}</div>
+            <div class="drive-role">{{ d.job_role }}</div>
+            <div class="drive-salary">{{ d.salary_package }} LPA</div>
+            <div class="drive-tags">
+              {% for b in d.allowed_branches %}
+              <span class="drive-tag">{{ b }}</span>
+              {% endfor %}
+            </div>
+            <div class="drive-meta">
+              CGPA ≥ <span>{{ d.min_cgpa }}</span> &nbsp;·&nbsp;
+              Max backlogs: <span>{{ d.max_backlogs }}</span>
+            </div>
+            <div class="drive-meta" style="margin-bottom:.75rem;">
+              Deadline: <span>{{ d.application_deadline }}</span>
+            </div>
+            {% if d.drive_id in applied_drives %}
+              <span class="pill pill-applied">Applied ✓</span>
+            {% else %}
+              <button class="btn btn-teal btn-sm" onclick="applyDrive('{{ d.drive_id }}', this)" style="margin-top:.5rem;">Apply Now</button>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="es-icon">📭</div><p>No active drives at the moment.<br>Check back soon!</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- APPLICATIONS -->
+    <div class="tab-panel" data-panel="applications">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">My Applications</span>
+          <span class="card-badge">{{ applications|length }}</span>
+        </div>
+        {% if applications %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Drive ID</th><th>Applied On</th><th>Current Status</th></tr></thead>
+            <tbody>
+              {% for a in applications %}
+              <tr>
+                <td style="font-family:monospace;font-size:.78rem;color:var(--text3)">{{ a.drive_id[:8] }}…</td>
+                <td>{{ a.applied_at[:10] }}</td>
+                <td><span class="pill pill-{{ a.status|lower }}">{{ a.status }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <div class="chart-box" style="max-width:360px;"><div class="chart-box-title">Application Pipeline</div><div class="chart-wrap" style="height:180px;"><canvas id="chart-apps"></canvas></div></div>
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="es-icon">📝</div><p>You haven't applied to any drives yet.<br>Browse active drives to get started.</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- AI RESUME ANALYZER -->
+    <div class="tab-panel" data-panel="ai">
+      <div class="ai-analyzer">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+          <div>
+            <div style="font-family:var(--font-head);font-weight:700;font-size:1.1rem;margin-bottom:.3rem;">AI Resume Analyzer</div>
+            <div style="font-size:.83rem;color:var(--text2);">Upload your resume and get instant AI-powered feedback, skill gap analysis, and improvement suggestions.</div>
+          </div>
+          <button id="analyze-btn" class="btn btn-primary" onclick="analyzeResume()">✦ Analyze Resume</button>
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block;font-size:.78rem;margin-bottom:.5rem;">Upload Your Resume</label>
+          <input type="file" accept=".pdf,.doc,.docx" style="cursor:pointer;">
+        </div>
+        <div id="ai-result">
+          <div class="empty-state" style="padding:2rem;"><div class="es-icon">🤖</div><p>Click "Analyze Resume" to get instant AI feedback on your resume.</p></div>
+        </div>
+      </div>
+    </div>
+
+   <!-- MENTORSHIP -->
+<div class="tab-panel" data-panel="mentorship">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Available Mentorship Sessions</span>
+      <span class="card-badge" id="session-count">{{ mentorship_sessions|length }} sessions</span>
+    </div>
+    {% if mentorship_sessions %}
+    <div class="drives-grid">
+      {% for s in mentorship_sessions %}
+      <div class="drive-card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem;">
+          <span class="pill pill-{{ s.status }}">{{ s.status|title }}</span>
+          {% if s.status == "booked" and s.get("student_id") == session.user_id %}
+            <span style="font-size:.7rem; color:#4ade80;">✓ Your booking</span>
+          {% endif %}
+        </div>
+        <div class="drive-company">{{ s.session_type }}</div>
+        <div class="drive-role">by {{ s.alumni_name }}</div>
+        <div class="drive-meta session-datetime" 
+     style="margin-top:.6rem;"
+     data-date="{{ s.get('session_date','') }}"
+     data-time="{{ s.get('session_time','23:59') }}">
+     📅 <span>{{ s.get("session_date", "Date TBD") }}</span>
+     &nbsp;·&nbsp;
+  🕐 <span>{{ s.get("session_time", "") }}</span>
+</div>
+        <div class="drive-meta">
+          ⏱ <span>{{ s.get("duration", "60 min") }}</span>
+          &nbsp;·&nbsp;
+          📍 <span>{{ s.get("mode", "Online") }}</span>
+        </div>
+        {% if s.get("notes") %}
+        <div style="margin:.75rem 0; font-size:.78rem; color:rgba(255,255,255,.4); line-height:1.5; padding:.6rem; background:rgba(255,255,255,.03); border-radius:8px; border:.5px solid rgba(255,255,255,.06);">
+          {{ s.notes }}
+        </div>
+        {% endif %}
+       <div style="margin-top:.75rem;" 
+     data-session-date="{{ s.get('session_date','') }}" 
+     data-session-time="{{ s.get('session_time','23:59') }}"
+     data-session-id="{{ s.session_id }}"
+     data-status="{{ s.status }}"
+     data-is-mine="{{ 'true' if s.get('student_id') == session.user_id else 'false' }}"
+     class="session-action-wrap">
+
+  {% if s.status == "booked" and s.get("student_id") == session.user_id %}
+    <span class="pill pill-selected" style="padding:.4rem .9rem;">Booked by you ✓</span>
+  {% elif s.status == "booked" %}
+    <span class="pill pill-rejected" style="padding:.4rem .9rem;">Already booked</span>
+  {% else %}
+    <!-- JS will replace this based on time check -->
+    <button class="btn btn-primary btn-sm" onclick="bookSession('{{ s.session_id }}', this)">
+      Book Session
+    </button>
+  {% endif %}
+</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="es-icon">🧑‍🏫</div>
+      <p>No mentorship sessions available right now.<br>Check back soon as alumni add new slots.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+    <!-- PROFILE -->
+    <div class="tab-panel" data-panel="profile">
+      <div class="card">
+        <div class="card-header"><span class="card-title">My Career Profile</span></div>
+        <div class="profile-chip">
+          <div class="avatar-circle">{{ session.name[:2]|upper }}</div>
+          <div><div class="chip-name">{{ profile.full_name }}</div><div class="chip-sub">{{ profile.branch }} &nbsp;·&nbsp; CGPA {{ profile.cgpa }}</div></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td style="color:var(--text3);width:40%;">USN</td><td>{{ profile.usn }}</td></tr>
+              <tr><td style="color:var(--text3);">Email</td><td>{{ profile.email }}</td></tr>
+              <tr><td style="color:var(--text3);">Phone</td><td>{{ profile.phone }}</td></tr>
+              <tr><td style="color:var(--text3);">Backlogs</td><td>{{ profile.backlogs }}</td></tr>
+              <tr><td style="color:var(--text3);">LinkedIn</td><td><a href="{{ profile.linkedin }}" style="color:var(--accent2);">{{ profile.linkedin }}</a></td></tr>
+              <tr><td style="color:var(--text3);">Skills</td><td>
+                {% if profile.skills %}{% for s in profile.skills %}<span class="pill pill-applied" style="margin-right:3px;">{{ s }}</span>{% endfor %}{% endif %}
+              </td></tr>
+              <tr><td style="color:var(--text3);">Projects</td><td style="white-space:pre-line;font-size:.82rem;">{{ profile.projects }}</td></tr>
+              <tr><td style="color:var(--text3);">Achievements</td><td style="font-size:.82rem;">{{ profile.achievements }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {% if notifications %}
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔔 Notifications</span><span class="card-badge">{{ notifications|length }}</span></div>
+        {% for n in notifications %}
+        <div style="padding:.75rem 0; border-bottom:.5px solid var(--border); font-size:.85rem; color:var(--text2);">
+          {{ n.message }}
+          <div style="font-size:.72rem;color:var(--text3);margin-top:3px;">{{ n.created_at[:10] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+{% if applications %}
+const statuses = {{ applications | map(attribute='status') | list | tojson }};
+const counts = {};
+statuses.forEach(s => counts[s] = (counts[s] || 0) + 1);
+const ctx = document.getElementById("chart-apps");
+if (ctx) {
+  new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ data: Object.values(counts), backgroundColor: ["#3b82f6","#fbbf24","#a78bfa","#4ade80","#f87171"], borderWidth: 0 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, cutout:"60%", plugins:{ legend:{ labels:{ color:"rgba(240,239,255,.5)", font:{size:11}, boxWidth:10 } } } }
+  });
+}
+function toggleNotifs(e) {
+  e.stopPropagation();
+  const dd = document.getElementById("notif-dropdown");
+  const isOpen = dd.style.display === "block";
+  dd.style.display = isOpen ? "none" : "block";
+}
+
+function clearNotifs() {
+  document.getElementById("notif-dropdown").style.display = "none";
+  const badge = document.getElementById("notif-badge");
+  if (badge) badge.remove();
+  // Optional: mark as read via API
+  fetch("/api/notifications/mark_read", { method: "POST" }).catch(() => {});
+}
+
+// Close dropdown when clicking anywhere else
+document.addEventListener("click", function(e) {
+  const wrapper = document.getElementById("notif-wrapper");
+  if (wrapper && !wrapper.contains(e.target)) {
+    document.getElementById("notif-dropdown").style.display = "none";
+  }
+});
+(function checkExpiredSessions() {
+  const now = new Date();
+
+  document.querySelectorAll(".session-action-wrap").forEach(wrap => {
+    const dateStr = wrap.dataset.sessionDate;
+    const timeStr = wrap.dataset.sessionTime || "23:59";
+    const status  = wrap.dataset.status;
+    const isMine  = wrap.dataset.isMine === "true";
+
+    if (!dateStr) return;
+
+    // Parse session datetime
+    const sessionDT = new Date(`${dateStr}T${timeStr}:00`);
+    const isExpired = sessionDT < now;
+
+    if (isExpired && status !== "booked") {
+      // Replace Book Session button with Expired badge
+      wrap.innerHTML = `
+        <span class="pill pill-rejected" style="padding:.4rem .9rem; display:inline-flex; align-items:center; gap:5px;">
+          ⏰ Session Expired
+        </span>`;
+    }
+  });
+
+  // Also grey out the card + dim date text for expired sessions
+  document.querySelectorAll(".session-datetime").forEach(el => {
+    const dateStr = el.dataset.date;
+    const timeStr = el.dataset.time || "23:59";
+    if (!dateStr) return;
+
+    const sessionDT = new Date(`${dateStr}T${timeStr}:00`);
+    if (sessionDT < now) {
+      el.style.opacity = "0.4";
+      el.style.textDecoration = "line-through";
+
+      // Also dim the whole card slightly
+      const card = el.closest(".drive-card");
+      if (card) {
+        card.style.opacity = "0.6";
+        card.style.filter  = "grayscale(40%)";
+      }
+    }
+  });
+})();
+{% endif %}
+</script>
+</body>
+</html>

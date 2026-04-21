@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TPO Dashboard — CampusEdge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="bg-glow"></div><div class="grid-lines"></div>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo"><span class="logo-spark">✦</span> CampusEdge</a>
+  <div class="nav-user">
+    <span class="nav-name">{{ session.name }}</span>
+    <span class="nav-badge badge-tpo">TPO</span>
+    <a href="/logout" class="btn-logout">Sign out</a>
+  </div>
+</nav>
+
+<div class="page container">
+  <div class="dash-header">
+    <div class="dash-greeting">Welcome back, {{ session.name }} 👋</div>
+    <div class="dash-sub">Manage placement drives, track applications, and review referrals.</div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics-row">
+    <div class="metric-card"><div class="mc-label">Total Students</div><div class="mc-val" style="color:#a78bfa;">{{ total_students }}</div><div class="mc-delta">↑ enrolled</div></div>
+    <div class="metric-card"><div class="mc-label">Active Drives</div><div class="mc-val" style="color:#4ade80;">{{ total_drives }}</div><div class="mc-delta">↑ this semester</div></div>
+    <div class="metric-card"><div class="mc-label">Pending Referrals</div><div class="mc-val" style="color:#fbbf24;">{{ referrals|length }}</div><div class="mc-delta">awaiting review</div></div>
+    <div class="metric-card"><div class="mc-label">Total Applications</div><div class="mc-val" style="color:#60a5fa;">—</div><div class="mc-delta">across all drives</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div data-tabs>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="drives">Placement Drives</button>
+      <button class="tab-btn" data-tab="students">Students</button>
+      <button class="tab-btn" data-tab="referrals">Referrals</button>
+      <button class="tab-btn" data-tab="analytics">Analytics</button>
+    </div>
+
+    <!-- ── DRIVES TAB ── -->
+    <div class="tab-panel active" data-panel="drives">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Placement Drives</span>
+          <button class="btn btn-primary btn-sm" data-open-modal="modal-drive">+ Create Drive</button>
+        </div>
+        {% if drives %}
+        <div class="drives-grid">
+          {% for d in drives %}
+          <div class="drive-card">
+            <div class="drive-company">{{ d.company_name }}</div>
+            <div class="drive-role">{{ d.job_role }}</div>
+            <div class="drive-salary">{{ d.salary_package }} LPA</div>
+            <div class="drive-tags">
+              {% for b in d.allowed_branches %}
+              <span class="drive-tag">{{ b }}</span>
+              {% endfor %}
+            </div>
+            <div class="drive-meta">
+              CGPA ≥ <span>{{ d.min_cgpa }}</span> &nbsp;·&nbsp;
+              Max backlogs: <span>{{ d.max_backlogs }}</span> &nbsp;·&nbsp;
+              Deadline: <span>{{ d.application_deadline }}</span>
+            </div>
+            <span class="pill pill-active">Active</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="es-icon">📋</div><p>No drives created yet.<br>Create your first placement drive above.</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── STUDENTS TAB ── -->
+    <div class="tab-panel" data-panel="students">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Registered Students</span>
+          <span class="card-badge">{{ total_students }} total</span>
+        </div>
+        {% if students %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Branch</th><th>CGPA</th><th>Backlogs</th><th>Email</th></tr></thead>
+            <tbody>
+              {% for s in students %}
+              <tr>
+                <td>{{ s.full_name }}</td>
+                <td>{{ s.branch }}</td>
+                <td>{{ s.cgpa }}</td>
+                <td>{{ s.backlogs }}</td>
+                <td>{{ s.email }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="es-icon">🧑‍🎓</div><p>No students registered yet.</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── REFERRALS TAB ── -->
+    <div class="tab-panel" data-panel="referrals">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Alumni Referrals — Pending Review</span>
+          <span class="card-badge">{{ referrals|length }} pending</span>
+        </div>
+        {% if referrals %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Alumni</th><th>Company</th><th>Job Title</th><th>Package</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>
+              {% for r in referrals %}
+              <tr>
+                <td>{{ r.alumni_name }}</td>
+                <td>{{ r.company }}</td>
+                <td>{{ r.job_title }}</td>
+                <td>{{ r.package }} LPA</td>
+                <td>{{ r.created_at[:10] }}</td>
+                <td style="display:flex;gap:6px;">
+                  <button class="btn btn-success btn-sm" onclick="handleReferral('{{r.ref_id}}','approved',this)">Approve</button>
+                  <button class="btn btn-danger btn-sm" onclick="handleReferral('{{r.ref_id}}','rejected',this)">Reject</button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="es-icon">📬</div><p>No pending referrals.</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── ANALYTICS TAB ── -->
+    <div class="tab-panel" data-panel="analytics">
+      <div class="chart-grid">
+        <div class="chart-box"><div class="chart-box-title">Applications by Status</div><div class="chart-wrap"><canvas id="chart-status"></canvas></div></div>
+        <div class="chart-box"><div class="chart-box-title">Placements by Branch</div><div class="chart-wrap"><canvas id="chart-branch"></canvas></div></div>
+      </div>
+    </div>
+
+  </div><!-- /tabs -->
+</div>
+
+<!-- ── CREATE DRIVE MODAL ── -->
+<div class="modal-overlay" id="modal-drive">
+  <div class="modal">
+    <button class="modal-close">✕</button>
+    <div class="modal-title">Create Placement Drive</div>
+    <form method="POST" action="/tpo/create_drive">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" name="company_name" placeholder="e.g. Google, Infosys" required>
+        </div>
+        <div class="form-group">
+          <label>Job Role</label>
+          <input type="text" name="job_role" placeholder="e.g. Software Engineer" required>
+        </div>
+        <div class="form-group">
+          <label>Minimum CGPA</label>
+          <input type="number" name="min_cgpa" step="0.1" min="0" max="10" placeholder="7.0" required>
+        </div>
+        <div class="form-group">
+          <label>Max Backlogs Allowed</label>
+          <input type="number" name="max_backlogs" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label>Salary Package (LPA)</label>
+          <input type="text" name="salary_package" placeholder="12.5" required>
+        </div>
+        <div class="form-group">
+          <label>Application Deadline</label>
+          <input type="date" name="application_deadline" required>
+        </div>
+        <div class="form-group span2">
+          <label>Allowed Branches (select all that apply)</label>
+          <div class="checkbox-group">
+            {% for b in ["CSE","ISE","ECE","EEE","ME","CE","AIML","DS","CY"] %}
+            <label class="checkbox-item"><input type="checkbox" name="allowed_branches" value="{{b}}"> {{b}}</label>
+            {% endfor %}
+            <label class="checkbox-item"><input type="checkbox" name="allowed_branches" value="ALL"> All Branches</label>
+          </div>
+        </div>
+        <div class="form-group span2">
+          <label>Job Description (optional)</label>
+          <textarea name="description" placeholder="Describe the role, requirements, process…"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Create Drive & Notify Eligible Students →</button>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+const CHART_OPTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: "rgba(240,239,255,.55)", font: { size: 11 }, boxWidth: 12 } } }
+};
+
+new Chart(document.getElementById("chart-status"), {
+  type: "doughnut",
+  data: {
+    labels: ["Applied","Aptitude","Interview","Selected","Rejected"],
+    datasets: [{ data: [40,20,15,18,7], backgroundColor: ["#3b82f6","#fbbf24","#a78bfa","#4ade80","#f87171"], borderWidth: 0 }]
+  },
+  options: { ...CHART_OPTS, cutout: "65%" }
+});
+
+new Chart(document.getElementById("chart-branch"), {
+  type: "bar",
+  data: {
+    labels: ["CSE","ISE","ECE","ME","CE","AIML"],
+    datasets: [{ label: "Placed", data: [85,72,60,45,38,90], backgroundColor: "rgba(124,58,237,.6)", borderRadius: 6 }]
+  },
+  options: {
+    ...CHART_OPTS, indexAxis: "y",
+    scales: {
+      x: { ticks: { color: "rgba(240,239,255,.4)" }, grid: { color: "rgba(255,255,255,.04)" } },
+      y: { ticks: { color: "rgba(240,239,255,.55)" }, grid: { display: false } }
+    }
+  }
+});
+</script>
+</body>
+</html>
